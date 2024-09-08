@@ -1,6 +1,6 @@
-component AND G1
-component OR G2
-component NOT G3
-wire G1 G2
-wire G2 G3
-end
+# Half-adder circuit
+component XOR Gate1
+component AND Gate2
+wire Gate1 Gate2 0
+input Gate1 0 0
+input Gate1 1 0

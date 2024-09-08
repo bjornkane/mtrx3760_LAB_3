@@ -1,7 +1,6 @@
-GATE AND 1 2 0
-GATE OR 3 4 1
-GATE XOR 5 6 2
-GATE COMPARATOR 7 8 3
-WIRE 0 3
-WIRE 1 4
-WIRE 2 5
+component AND G1
+component OR G2
+component NOT G3
+wire G1 G2
+wire G2 G3
+end

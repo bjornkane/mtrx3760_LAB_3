@@ -1,9 +1,5 @@
 #include <iostream>
-#include <fstream>
-#include <sstream>
 #include <string>
-#include <unordered_map>
-#include <vector>
 
 // Constants and enums
 const int InputsPerGate = 2;                 // Number of inputs per gate
@@ -22,12 +18,8 @@ public:
     virtual void ConnectOutput(class CWires* apOutputConnection) = 0;    // Connects the gate's output to a wire
 
 protected:
-    CLogicGates() : mOutputValue(LOGIC_UNDEFINED), mpOutputConnection(nullptr) {
-        mInputs[0] = LOGIC_UNDEFINED;
-        mInputs[1] = LOGIC_UNDEFINED;
-    }
-
-    virtual void ComputeOutput() = 0;   // Computes the output state of the gate
+    CLogicGates();                      // Constructor to initialize the gate
+    virtual void ComputeOutput();       // Computes the output state of the gate
 
     eLogicLevel mInputs[InputsPerGate]; // Array to store the input states of the gate
     eLogicLevel mOutputValue;           // Stores the current output state of the gate
@@ -37,213 +29,341 @@ protected:
 // CWires class
 class CWires {
 public:
-    CWires() : mNumOutputConnections(0) {
-        for (int i = 0; i < MaxFanout; ++i) {
-            mpGatesToDrive[i] = nullptr;
-            mGateInputIndices[i] = -1;
-        }
-    }
-
-    void AddOutputConnection(CLogicGates* apGateToDrive, int aGateInputToDrive) {
-        if (mNumOutputConnections < MaxFanout) {
-            mpGatesToDrive[mNumOutputConnections] = apGateToDrive;
-            mGateInputIndices[mNumOutputConnections] = aGateInputToDrive;
-            ++mNumOutputConnections;
-        }
-    }
-
-    void DriveLevel(eLogicLevel aNewLevel) {
-        for (int i = 0; i < mNumOutputConnections; ++i) {
-            if (mpGatesToDrive[i] != nullptr) {
-                mpGatesToDrive[i]->DriveInput(mGateInputIndices[i], aNewLevel);
-            }
-        }
-    }
+    CWires();                                                                        // Constructor to initialize the wire
+    void AddOutputConnection(CLogicGates* apGateToDrive, int aGateInputToDrive);     // Adds a gate to be driven by this wire
+    void DriveLevel(eLogicLevel aNewLevel);                                          // Passes the logic level through to the connected gates
 
 private:
-    int mNumOutputConnections;
-    CLogicGates* mpGatesToDrive[MaxFanout];
-    int mGateInputIndices[MaxFanout];
+    int mNumOutputConnections;              // Number of inputs, the output of this wire is connected to
+    CLogicGates* mpGatesToDrive[MaxFanout]; // Array of pointers to gates this wire drives
+    int mGateInputIndices[MaxFanout];       // Indices of the inputs in the gates that this wire is connected to
 };
 
-// Specific gate implementations (AND, OR, XOR, NOT)
+// CLogicGates class implementation
+CLogicGates::CLogicGates() 
+    : mOutputValue(LOGIC_UNDEFINED),
+      mpOutputConnection(nullptr) 
+{
+    mInputs[0] = LOGIC_UNDEFINED;
+    mInputs[1] = LOGIC_UNDEFINED;
+}
+
+void CLogicGates::ComputeOutput() {
+    // Base implementation for derived classes to override
+}
+
+// CWires class implementation
+CWires::CWires() 
+    : mNumOutputConnections(0) 
+{
+    for (int i = 0; i < MaxFanout; ++i) 
+    {
+        mpGatesToDrive[i] = nullptr;   // Initialize gate pointers to nullptr
+        mGateInputIndices[i] = -1;     // Initialize gate input indices to -1
+    }
+}
+
+void CWires::AddOutputConnection(CLogicGates* apGateToDrive, int aGateInputToDrive) {
+    if (mNumOutputConnections < MaxFanout) 
+    {
+        mpGatesToDrive[mNumOutputConnections] = apGateToDrive;          // Store the gate pointer
+        mGateInputIndices[mNumOutputConnections] = aGateInputToDrive;   // Store the input index
+        ++mNumOutputConnections;                                        // Increment the number of connections
+    }
+}
+
+void CWires::DriveLevel(eLogicLevel aNewLevel) {
+    for (int i = 0; i < mNumOutputConnections; ++i) 
+    {
+        if (mpGatesToDrive[i] != nullptr) 
+        {
+            mpGatesToDrive[i]->DriveInput(mGateInputIndices[i], aNewLevel); // Set the input level on each connected gate
+        }
+    }
+}
+
+// CAndGates class
 class CAndGates : public CLogicGates {
 public:
-    CAndGates() { }
-    void DriveInput(int aInputIndex, eLogicLevel aNewLevel) override {
-        if (aInputIndex >= 0 && aInputIndex < InputsPerGate) {
-            mInputs[aInputIndex] = aNewLevel;
-            ComputeOutput();
-        }
-    }
-    eLogicLevel GetOutputState() const override { return mOutputValue; }
-    void ConnectOutput(CWires* apOutputConnection) override { mpOutputConnection = apOutputConnection; }
+    CAndGates();                                         // Constructor to initialize the AND gate
+    void DriveInput(int aInputIndex, eLogicLevel aNewLevel) override;  // Drives an input to the AND gate
+    eLogicLevel GetOutputState() const override;        // Returns the current output state of the AND gate
+    void ConnectOutput(CWires* apOutputConnection) override; // Connects the output of the AND gate to a wire
 
-protected:
-    void ComputeOutput() override {
-        eLogicLevel NewVal = LOGIC_HIGH;
-        if (mInputs[0] == LOGIC_LOW || mInputs[1] == LOGIC_LOW) {
-            NewVal = LOGIC_LOW;
-        }
-        mOutputValue = NewVal;
-        if (mpOutputConnection != nullptr) {
-            mpOutputConnection->DriveLevel(mOutputValue);
-        }
-    }
+private:
+    void ComputeOutput() override;    // Computes the output based on the inputs
 };
 
+// CORGates class
 class CORGates : public CLogicGates {
 public:
-    CORGates() { }
-    void DriveInput(int aInputIndex, eLogicLevel aNewLevel) override {
-        if (aInputIndex >= 0 && aInputIndex < InputsPerGate) {
-            mInputs[aInputIndex] = aNewLevel;
-            ComputeOutput();
-        }
-    }
-    eLogicLevel GetOutputState() const override { return mOutputValue; }
-    void ConnectOutput(CWires* apOutputConnection) override { mpOutputConnection = apOutputConnection; }
+    CORGates();                                           // Constructor to initialize the OR gate
+    void DriveInput(int aInputIndex, eLogicLevel aNewLevel) override;  // Drives an input to the OR gate
+    eLogicLevel GetOutputState() const override;         // Returns the current output state of the OR gate
+    void ConnectOutput(CWires* apOutputConnection) override; // Connects the output of the OR gate to a wire
 
-protected:
-    void ComputeOutput() override {
-        eLogicLevel NewVal = LOGIC_LOW;
-        if (mInputs[0] == LOGIC_HIGH || mInputs[1] == LOGIC_HIGH) {
-            NewVal = LOGIC_HIGH;
-        }
-        mOutputValue = NewVal;
-        if (mpOutputConnection != nullptr) {
-            mpOutputConnection->DriveLevel(mOutputValue);
-        }
-    }
+private:
+    void ComputeOutput() override;    // Computes the output based on the inputs
 };
 
+// CXORGates class
 class CXORGates : public CLogicGates {
 public:
-    CXORGates() { }
-    void DriveInput(int aInputIndex, eLogicLevel aNewLevel) override {
-        if (aInputIndex >= 0 && aInputIndex < InputsPerGate) {
-            mInputs[aInputIndex] = aNewLevel;
-            ComputeOutput();
-        }
-    }
-    eLogicLevel GetOutputState() const override { return mOutputValue; }
-    void ConnectOutput(CWires* apOutputConnection) override { mpOutputConnection = apOutputConnection; }
+    CXORGates();                                            // Constructor to initialize the XOR gate
+    void DriveInput(int aInputIndex, eLogicLevel aNewLevel) override;  // Drives an input to the XOR gate
+    eLogicLevel GetOutputState() const override;           // Returns the current output state of the XOR gate
+    void ConnectOutput(CWires* apOutputConnection) override; // Connects the output of the XOR gate to a wire
 
-protected:
-    void ComputeOutput() override {
-        if ((mInputs[0] == LOGIC_HIGH && mInputs[1] == LOGIC_LOW) || (mInputs[0] == LOGIC_LOW && mInputs[1] == LOGIC_HIGH)) {
-            mOutputValue = LOGIC_HIGH;
-        } else {
-            mOutputValue = LOGIC_LOW;
-        }
-        if (mpOutputConnection != nullptr) {
-            mpOutputConnection->DriveLevel(mOutputValue);
-        }
-    }
+private:
+    void ComputeOutput() override;    // Computes the output based on the inputs
 };
 
-// New class for NOT gate
+// CNotGates class
 class CNotGates : public CLogicGates {
 public:
-    CNotGates() {
-        mInputs[1] = LOGIC_UNDEFINED; // NOT gate only has 1 input
-    }
-    void DriveInput(int aInputIndex, eLogicLevel aNewLevel) override {
-        if (aInputIndex == 0) {
-            mInputs[0] = aNewLevel;
-            ComputeOutput();
-        }
-    }
-    eLogicLevel GetOutputState() const override { return mOutputValue; }
-    void ConnectOutput(CWires* apOutputConnection) override { mpOutputConnection = apOutputConnection; }
+    CNotGates();                                            // Constructor to initialize the NOT gate
+    void DriveInput(int aInputIndex, eLogicLevel aNewLevel) override;  // Drives an input to the NOT gate
+    eLogicLevel GetOutputState() const override;           // Returns the current output state of the NOT gate
+    void ConnectOutput(CWires* apOutputConnection) override; // Connects the output of the NOT gate to a wire
 
-protected:
-    void ComputeOutput() override {
-        mOutputValue = (mInputs[0] == LOGIC_HIGH) ? LOGIC_LOW : LOGIC_HIGH;
-        if (mpOutputConnection != nullptr) {
-            mpOutputConnection->DriveLevel(mOutputValue);
-        }
-    }
+private:
+    void ComputeOutput() override;    // Computes the output based on the input
 };
+
+// CAndGates class implementation
+CAndGates::CAndGates() 
+{
+    mInputs[0] = LOGIC_UNDEFINED;
+    mInputs[1] = LOGIC_UNDEFINED;
+}
+
+void CAndGates::DriveInput(int aInputIndex, eLogicLevel aNewLevel) 
+{
+    if (aInputIndex >= 0 && aInputIndex < InputsPerGate) 
+    {
+        mInputs[aInputIndex] = aNewLevel;   // Set the input level
+        ComputeOutput();                    // Recompute the output based on the new input
+    }
+}
+
+eLogicLevel CAndGates::GetOutputState() const 
+{
+    return mOutputValue;  // Return the current output state
+}
+
+void CAndGates::ConnectOutput(CWires* apOutputConnection) 
+{
+    mpOutputConnection = apOutputConnection;  // Stores the wire pointer
+}
+
+void CAndGates::ComputeOutput() 
+{
+    eLogicLevel NewVal = LOGIC_HIGH;    // Default output state is HIGH (1)
+    if (mInputs[0] == LOGIC_LOW || mInputs[1] == LOGIC_LOW) 
+    {
+        NewVal = LOGIC_LOW;             // If any input is LOW, output is LOW
+    }
+    mOutputValue = NewVal;              // Update the output state of the AND gate
+
+    if (mpOutputConnection != nullptr) 
+    {
+        mpOutputConnection->DriveLevel(mOutputValue);  // Drive the wire connected to the AND gate's output
+    }
+}
+
+// CORGates class implementation
+CORGates::CORGates() 
+{
+    mInputs[0] = LOGIC_UNDEFINED;
+    mInputs[1] = LOGIC_UNDEFINED;
+}
+
+void CORGates::DriveInput(int aInputIndex, eLogicLevel aNewLevel) 
+{
+    if (aInputIndex >= 0 && aInputIndex < InputsPerGate) 
+    {
+        mInputs[aInputIndex] = aNewLevel;   // Set the input level
+        ComputeOutput();                    // Recompute the output based on the new input
+    }
+}
+
+eLogicLevel CORGates::GetOutputState() const 
+{
+    return mOutputValue;  // Return the current output state
+}
+
+void CORGates::ConnectOutput(CWires* apOutputConnection) 
+{
+    mpOutputConnection = apOutputConnection;  // Store the wire pointer
+}
+
+void CORGates::ComputeOutput() 
+{
+    eLogicLevel NewVal = LOGIC_LOW;     // Default output state is LOW
+    if (mInputs[0] == LOGIC_HIGH || mInputs[1] == LOGIC_HIGH) 
+    {
+        NewVal = LOGIC_HIGH;            // If any input is HIGH, output is HIGH
+    }
+    mOutputValue = NewVal;              // Update the output state of the OR gate
+
+    if (mpOutputConnection != nullptr) 
+    {
+        mpOutputConnection->DriveLevel(mOutputValue);  // Drive the wire connected to the OR gate's output
+    }
+}
+
+// CXORGates class implementation
+CXORGates::CXORGates() 
+{
+    mInputs[0] = LOGIC_UNDEFINED;
+    mInputs[1] = LOGIC_UNDEFINED;
+}
+
+void CXORGates::DriveInput(int aInputIndex, eLogicLevel aNewLevel) 
+{
+    if (aInputIndex >= 0 && aInputIndex < InputsPerGate) 
+    {
+        mInputs[aInputIndex] = aNewLevel;   // Set the input level
+        ComputeOutput();                    // Recompute the output based on the new input
+    }
+}
+
+eLogicLevel CXORGates::GetOutputState() const 
+{
+    return mOutputValue;  // Return the current output state
+}
+
+void CXORGates::ConnectOutput(CWires* apOutputConnection) 
+{
+    mpOutputConnection = apOutputConnection;  // Store the wire pointer
+}
+
+void CXORGates::ComputeOutput() 
+{
+    // XOR logic: output is HIGH if exactly one input is HIGH
+    if ((mInputs[0] == LOGIC_HIGH && mInputs[1] == LOGIC_LOW) || 
+        (mInputs[0] == LOGIC_LOW && mInputs[1] == LOGIC_HIGH)) 
+    {
+        mOutputValue = LOGIC_HIGH;
+    } 
+    else 
+    {
+        mOutputValue = LOGIC_LOW;
+    }
+
+    if (mpOutputConnection != nullptr) 
+    {
+        mpOutputConnection->DriveLevel(mOutputValue);  // Drive the wire connected to the XOR gate's output
+    }
+}
+
+// CNotGates class implementation
+CNotGates::CNotGates() 
+{
+    mInputs[0] = LOGIC_UNDEFINED; // NOT gate only has one input
+}
+
+void CNotGates::DriveInput(int aInputIndex, eLogicLevel aNewLevel) 
+{
+    if (aInputIndex == 0) 
+    {
+        mInputs[0] = aNewLevel;   // Set the input level
+        ComputeOutput();          // Recompute the output based on the new input
+    }
+}
+
+eLogicLevel CNotGates::GetOutputState() const 
+{
+    return mOutputValue;  // Return the current output state
+}
+
+void CNotGates::ConnectOutput(CWires* apOutputConnection) 
+{
+    mpOutputConnection = apOutputConnection;  // Store the wire pointer
+}
+
+void CNotGates::ComputeOutput() 
+{
+    // NOT logic: output is the opposite of the input
+    mOutputValue = (mInputs[0] == LOGIC_HIGH) ? LOGIC_LOW : LOGIC_HIGH;
+
+    if (mpOutputConnection != nullptr) 
+    {
+        mpOutputConnection->DriveLevel(mOutputValue);  // Drive the wire connected to the NOT gate's output
+    }
+}
 
 // Circuit class
 class Circuit {
 public:
-    Circuit() { WireConnections.reserve(100); }
-    void LoadCircuitFromFile(const std::string& filename);
-    void TestInputStates(const std::string& gateType);
-    void TestCircuit();
+    Circuit();                                              // Constructor to initialize the circuit
+    void TestInputStates(const std::string& gateType);      // Function to test input states for different gate types
 
 private:
-    std::unordered_map<int, CLogicGates*> Gates; // Maps gate IDs to gate objects
-    std::unordered_map<std::string, int> GateTypeIDMap; // Maps gate types to their corresponding IDs
-    std::vector<CWires*> WireConnections;   // Dynamic list of wires
+    static const int NumAndGates = 4;                   // Number of AND gates in the circuit
+    static const int NumOrgates = 4;                    // Number of OR gates in the circuit
+    static const int NumXorgates = 4;                   // Number of XOR gates in the circuit
+    static const int NumNotGates = 4;                   // Number of NOT gates in the circuit
+    static const int NumWires = 100;                    // Number of wires in the circuit
 
-    CLogicGates* CreateGate(const std::string& gateType);
+    CAndGates ANDGates[NumAndGates];                                // Array of AND gates
+    CORGates ORGates[NumOrgates];                                   // Array of OR gates
+    CXORGates XORGates[NumXorgates];                                // Array of XOR gates
+    CNotGates NOTGates[NumNotGates];                                // Array of NOT gates
+    CWires WireConnections[NumWires];                               // Array of wires used in the circuit
 };
 
-CLogicGates* Circuit::CreateGate(const std::string& gateType) {
-    if (gateType == "AND") return new CAndGates();
-    if (gateType == "OR") return new CORGates();
-    if (gateType == "XOR") return new CXORGates();
-    if (gateType == "NOT") return new CNotGates(); // Add NOT gate creation
-    return nullptr;
-}
-
-void Circuit::LoadCircuitFromFile(const std::string& filename) {
-    std::ifstream file(filename);
-    std::string line;
-
-    if (!file.is_open()) {
-        std::cerr << "Error: Unable to open file '" << filename << "'. Please check the file path and permissions." << std::endl;
-    return;
-}
-    while (std::getline(file, line)) {
-        std::istringstream iss(line);
-        std::string command;
-        iss >> command;
-
-        if (command == "GATE") {
-            std::string gateType;
-            int gateId, input1, input2, output;
-            iss >> gateType >> gateId >> input1 >> input2 >> output;
-            CLogicGates* gate = CreateGate(gateType);
-            Gates[gateId] = gate;
-            GateTypeIDMap[gateType] = gateId;
-
-            if (output >= WireConnections.size()) {
-                WireConnections.resize(output + 1, nullptr);
-            }
-
-            if (!WireConnections[output]) {
-                WireConnections[output] = new CWires();
-            }
-
-            WireConnections[output]->AddOutputConnection(gate, 0);
-        }
-        else if (command == "WIRE") {
-            int outputWire, inputWire;
-            iss >> outputWire >> inputWire;
-
-            if (outputWire >= WireConnections.size()) {
-                WireConnections.resize(outputWire + 1, nullptr);
-            }
-
-            if (!WireConnections[outputWire]) {
-                WireConnections[outputWire] = new CWires();
-            }
-
-            WireConnections[outputWire]->AddOutputConnection(Gates[inputWire], 0);
-        }
+// Circuit class implementation
+Circuit::Circuit() 
+{
+    for (int i = 0; i < NumAndGates; ++i) 
+    {
+        ANDGates[i] = CAndGates();          // Initializes the AND gate array
     }
 
-    file.close();
+    for (int i = 0; i < NumOrgates; ++i) 
+    {
+        ORGates[i] = CORGates();            // Initializes the OR gate array
+    }
+
+    for (int i = 0; i < NumXorgates; ++i) 
+    {
+        XORGates[i] = CXORGates();          // Initializes the XOR gate array
+    }
+
+    for (int i = 0; i < NumNotGates; ++i) 
+    {
+        NOTGates[i] = CNotGates();          // Initializes the NOT gate array
+    }
+
+    for (int i = 0; i < NumWires; ++i) 
+    {
+        WireConnections[i] = CWires();      // Initializes the wire array
+    }
+
+    // Example connections for AND Gate 0
+    WireConnections[0].AddOutputConnection(&ANDGates[0], 0);        // Connect wire 0 to input 0 of AND gate 0
+    WireConnections[1].AddOutputConnection(&ANDGates[0], 1);        // Connect wire 1 to input 1 of AND gate 0
+    ANDGates[0].ConnectOutput(nullptr);                             // Connect the output of AND gate 0
+
+    // Example connections for OR Gate 0
+    WireConnections[0].AddOutputConnection(&ORGates[0], 0);         // Connect wire 0 to input 0 of OR gate 0
+    WireConnections[1].AddOutputConnection(&ORGates[0], 1);         // Connect wire 1 to input 1 of OR gate 0
+    ORGates[0].ConnectOutput(nullptr);                              // Connect the output of OR gate 0
+
+    // Example connections for XOR Gate 0
+    WireConnections[0].AddOutputConnection(&XORGates[0], 0);        // Connect wire 0 to input 0 of XOR gate 0
+    WireConnections[1].AddOutputConnection(&XORGates[0], 1);        // Connect wire 1 to input 1 of XOR gate 0
+    XORGates[0].ConnectOutput(nullptr);                             // Connect the output of XOR gate 0
+
+    // Example connections for NOT Gate 0
+    WireConnections[0].AddOutputConnection(&NOTGates[0], 0);        // Connect wire 0 to input of NOT gate 0
+    NOTGates[0].ConnectOutput(nullptr);                             // Connect the output of NOT gate 0
 }
 
 void Circuit::TestInputStates(const std::string& gateType) 
 {
     std::cout << gateType << std::endl;
-    int gateId = GateTypeIDMap[gateType.substr(0, gateType.find(" "))];
 
     if (gateType == "AND GATE") 
     {
@@ -256,16 +376,16 @@ void Circuit::TestInputStates(const std::string& gateType)
 
         for (int i = 0; i < 4; ++i) 
         {
-            WireConnections[0]->DriveLevel(inputs[i][0]);
-            WireConnections[1]->DriveLevel(inputs[i][1]);
+            WireConnections[0].DriveLevel(inputs[i][0]);
+            WireConnections[1].DriveLevel(inputs[i][1]);
             std::cout << "Input: A = " << (inputs[i][0] == LOGIC_HIGH ? 1 : 0)
                       << ", B = " << (inputs[i][1] == LOGIC_HIGH ? 1 : 0)
-                      << "; Output: " << (Gates[gateId]->GetOutputState() == LOGIC_HIGH ? 1 : 0) << std::endl;
+                      << "; Output: " << (ANDGates[0].GetOutputState() == LOGIC_HIGH ? 1 : 0) << std::endl;
         }
         std::cout << std::endl;
-    }
-
-        if (gateType == "OR GATE") 
+    } 
+    
+    else if (gateType == "OR GATE") 
     {
         eLogicLevel inputs[4][2] = {
             {LOGIC_LOW, LOGIC_LOW},  // A = 0, B = 0
@@ -276,16 +396,16 @@ void Circuit::TestInputStates(const std::string& gateType)
 
         for (int i = 0; i < 4; ++i) 
         {
-            WireConnections[0]->DriveLevel(inputs[i][0]);
-            WireConnections[1]->DriveLevel(inputs[i][1]);
+            WireConnections[0].DriveLevel(inputs[i][0]);
+            WireConnections[1].DriveLevel(inputs[i][1]);
             std::cout << "Input: A = " << (inputs[i][0] == LOGIC_HIGH ? 1 : 0)
                       << ", B = " << (inputs[i][1] == LOGIC_HIGH ? 1 : 0)
-                      << "; Output: " << (Gates[gateId]->GetOutputState() == LOGIC_HIGH ? 1 : 0) << std::endl;
+                      << "; Output: " << (ORGates[0].GetOutputState() == LOGIC_HIGH ? 1 : 0) << std::endl;
         }
         std::cout << std::endl;
-    }
+    } 
 
-        if (gateType == "XOR GATE") 
+    else if (gateType == "XOR GATE") 
     {
         eLogicLevel inputs[4][2] = {
             {LOGIC_LOW, LOGIC_LOW},  // A = 0, B = 0
@@ -296,47 +416,39 @@ void Circuit::TestInputStates(const std::string& gateType)
 
         for (int i = 0; i < 4; ++i) 
         {
-            WireConnections[0]->DriveLevel(inputs[i][0]);
-            WireConnections[1]->DriveLevel(inputs[i][1]);
+            WireConnections[0].DriveLevel(inputs[i][0]);
+            WireConnections[1].DriveLevel(inputs[i][1]);
             std::cout << "Input: A = " << (inputs[i][0] == LOGIC_HIGH ? 1 : 0)
                       << ", B = " << (inputs[i][1] == LOGIC_HIGH ? 1 : 0)
-                      << "; Output: " << (Gates[gateId]->GetOutputState() == LOGIC_HIGH ? 1 : 0) << std::endl;
+                      << "; Output: " << (XORGates[0].GetOutputState() == LOGIC_HIGH ? 1 : 0) << std::endl;
         }
         std::cout << std::endl;
-    }
+    } 
 
-    if (gateType == "NOT GATE")
+    else if (gateType == "NOT GATE") 
     {
         eLogicLevel inputs[2] = {
             LOGIC_LOW,  // A = 0
             LOGIC_HIGH  // A = 1
         };
 
-        for (int i = 0; i < 2; ++i)
+        for (int i = 0; i < 2; ++i) 
         {
-            WireConnections[0]->DriveLevel(inputs[i]);
+            WireConnections[0].DriveLevel(inputs[i]);
             std::cout << "Input: A = " << (inputs[i] == LOGIC_HIGH ? 1 : 0)
-                      << "; Output: " << (Gates[gateId]->GetOutputState() == LOGIC_HIGH ? 1 : 0) << std::endl;
+                      << "; Output: " << (NOTGates[0].GetOutputState() == LOGIC_HIGH ? 1 : 0) << std::endl;
         }
         std::cout << std::endl;
     }
 }
 
-void Circuit::TestCircuit() {
-    TestInputStates("AND GATE");
-    TestInputStates("OR GATE");
-    TestInputStates("XOR GATE");
-    TestInputStates("NOT GATE"); // Test the NOT gate
-}
-
-int main() {
-    Circuit myCircuit;
-
-    // Load the circuit from a description file
-    myCircuit.LoadCircuitFromFile("C:\\Users\\varun\\Desktop\\USYD\\2024 SEM 2 (sem 5)\\MTRX3760\\Lab 3\\MTRX3760\\Lab 3\\circuit_tester.txt");
-
-    // Test the circuit after it's dynamically loaded
-    myCircuit.TestCircuit();
-
+int main() 
+{
+    Circuit myCircuits;                                      // Create an instance of the Circuit class
+    myCircuits.TestInputStates("AND GATE");                  // Test the AND gate
+    myCircuits.TestInputStates("OR GATE");                   // Test the OR gate
+    myCircuits.TestInputStates("XOR GATE");                  // Test the XOR gate
+    myCircuits.TestInputStates("NOT GATE");                  // Test the NOT gate
+    
     return 0;
 }

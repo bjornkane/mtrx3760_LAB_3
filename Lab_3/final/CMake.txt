@@ -1,0 +1,17 @@
+cmake_minimum_required(VERSION 3.10)
+
+project(CircuitSimulator)
+
+set(CMAKE_CXX_STANDARD 17)
+
+# Add source files
+add_executable(CircuitSimulator
+    main.cpp
+    AndGate.cpp
+    OrGate.cpp
+    XORGate.cpp
+    NotGate.cpp
+    Comparator.cpp
+    Circuit.cpp
+    FileReader.cpp
+)

@@ -1,29 +1,37 @@
-# Half-adder circuit
-component XOR Sum
-component AND Carry
+component XOR Sum    # XOR gate for sum
+component AND Carry    # AND gate for carry
 
-wire Sum Carry 0
-
-input Sum 0 0
-input Sum 1 0
-
-
-# One-bit Comparator Circuit
-
-component XOR XorGateComp      # XOR gate for a XOR b
-component NOT NotXorGateComp   # NOT gate for a == b (inverted XOR output)
-component AND AndALessBComp    # AND gate for a < b
-component AND AndAGreaterBComp # AND gate for a > b
-
-wire XorGateComp NotXorGateComp 0
-wire XorGateComp AndAGreaterBComp 0
-wire NotXorGateComp AndALessBComp 0
-
-input XorGateComp 0 1  # a = 1
-input XorGateComp 1 0  # b = 0
-
-output NotXorGateComp  # a == b
-output AndALessBComp   # a < b
-output AndAGreaterBComp # a > b
-output Sum  
+input Sum 0 0        # Set A = 0 for XOR
+input Sum 1 0        # Set B = 0 for XOR
+input Carry 0 0        # Set A = 0 for AND
+input Carry 1 0        # Set B = 0 for AND
+output Sum           # Output sum
 output Carry
+
+# A = 0, B = 1
+input Sum 0 0        # Set A = 0 for XOR
+input Sum 1 1       # Set B = 0 for XOR
+input Carry 0 0        # Set A = 0 for AND
+input Carry 1 1        # Set B = 0 for AND
+output Sum           # Output sum
+output Carry          # Output carry
+
+# A = 1, B = 0
+input Sum 0 1        # Set A = 0 for XOR
+input Sum 1 0        # Set B = 0 for XOR
+input Carry 0 1        # Set A = 0 for AND
+input Carry 1 0        # Set B = 0 for AND
+output Sum           # Output sum
+output Carry         # Output carry
+
+# A = 1, B = 1
+input Sum 0 1        # Set A = 0 for XOR
+input Sum 1 1        # Set B = 0 for XOR
+input Carry 0 1        # Set A = 0 for AND
+input Carry 1 1        # Set B = 0 for AND
+output Sum           # Output sum
+output Carry          # Output carry
+
+# End of configuration
+end
+

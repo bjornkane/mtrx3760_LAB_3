@@ -1,0 +1,29 @@
+# Half-adder circuit
+component XOR Sum
+component AND Carry
+
+wire Sum Carry 0
+
+input Sum 0 0
+input Sum 1 0
+
+
+# One-bit Comparator Circuit
+
+component XOR XorGateComp      # XOR gate for a XOR b
+component NOT NotXorGateComp   # NOT gate for a == b (inverted XOR output)
+component AND AndALessBComp    # AND gate for a < b
+component AND AndAGreaterBComp # AND gate for a > b
+
+wire XorGateComp NotXorGateComp 0
+wire XorGateComp AndAGreaterBComp 0
+wire NotXorGateComp AndALessBComp 0
+
+input XorGateComp 0 1  # a = 1
+input XorGateComp 1 0  # b = 0
+
+output NotXorGateComp  # a == b
+output AndALessBComp   # a < b
+output AndAGreaterBComp # a > b
+output Sum  
+output Carry

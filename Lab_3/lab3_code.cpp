@@ -15,6 +15,7 @@ public:
     virtual eLogicLevel GetOutputState() const = 0;
 
 protected:
+    virtual void ComputeOutput() = 0;
     std::vector<eLogicLevel> inputs;
     eLogicLevel outputValue = eLogicLevel::LOGIC_UNDEFINED;
 };
@@ -46,8 +47,8 @@ public:
     }
     eLogicLevel GetOutputState() const override { return outputValue; }
 
-private:
-    void ComputeOutput() {
+protected:
+    void ComputeOutput() override {
         outputValue = (inputs[0] == eLogicLevel::LOGIC_HIGH && inputs[1] == eLogicLevel::LOGIC_HIGH) ? eLogicLevel::LOGIC_HIGH : eLogicLevel::LOGIC_LOW;
     }
 };
@@ -61,8 +62,8 @@ public:
     }
     eLogicLevel GetOutputState() const override { return outputValue; }
 
-private:
-    void ComputeOutput() {
+protected:
+    void ComputeOutput() override {
         outputValue = (inputs[0] == eLogicLevel::LOGIC_HIGH || inputs[1] == eLogicLevel::LOGIC_HIGH) ? eLogicLevel::LOGIC_HIGH : eLogicLevel::LOGIC_LOW;
     }
 };
@@ -76,8 +77,8 @@ public:
     }
     eLogicLevel GetOutputState() const override { return outputValue; }
 
-private:
-    void ComputeOutput() {
+protected:
+    void ComputeOutput() override {
         outputValue = (inputs[0] != inputs[1]) ? eLogicLevel::LOGIC_HIGH : eLogicLevel::LOGIC_LOW;
     }
 };
@@ -91,8 +92,8 @@ public:
     }
     eLogicLevel GetOutputState() const override { return outputValue; }
 
-private:
-    void ComputeOutput() {
+protected:
+    void ComputeOutput() override {
         outputValue = (inputs[0] == eLogicLevel::LOGIC_HIGH) ? eLogicLevel::LOGIC_LOW : eLogicLevel::LOGIC_HIGH;
     }
 };
@@ -124,9 +125,24 @@ public:
         return gates.at(gateName)->GetOutputState();
     }
 
+    void AddOutputGate(const std::string& gateName) {
+        outputGates.push_back(gateName);
+    }
+
+    void PrintOutputs() const {
+        if (outputGates.empty()) {
+            std::cout << "No output gates defined!" << std::endl;
+            return;
+        }
+        for (const auto& gateName : outputGates) {
+            std::cout << gateName << " output: " << static_cast<int>(gates.at(gateName)->GetOutputState()) << std::endl;
+        }
+    }
+
 private:
     std::unordered_map<std::string, CLogicGates*> gates;
     std::unordered_map<std::string, std::vector<CWires*>> connections;
+    std::vector<std::string> outputGates;  // Holds the gates marked for output
 };
 
 // CircuitBuilder class for reading and building the circuit from a file
@@ -147,16 +163,24 @@ public:
                 std::string gateType, gateName;
                 file >> gateType >> gateName;
                 circuit.AddGate(gateType, gateName);
+                std::cout << "Added component: " << gateType << " " << gateName << std::endl;  // Debug info
             } else if (command == "wire") {
                 std::string fromGate, toGate;
                 int inputIndex;
                 file >> fromGate >> toGate >> inputIndex;
                 circuit.AddWire(fromGate, toGate, inputIndex);
+                std::cout << "Connected wire from: " << fromGate << " to " << toGate << std::endl;  // Debug info
             } else if (command == "input") {
                 std::string gateName;
                 int inputIndex, level;
                 file >> gateName >> inputIndex >> level;
                 circuit.DriveGate(gateName, inputIndex, static_cast<eLogicLevel>(level));
+                std::cout << "Set input for gate: " << gateName << " InputIndex: " << inputIndex << " Level: " << level << std::endl;  // Debug info
+            } else if (command == "output") {
+                std::string gateName;
+                file >> gateName;
+                circuit.AddOutputGate(gateName);
+                std::cout << "Marked gate for output: " << gateName << std::endl;  // Debug info
             }
         }
         file.close();
@@ -166,7 +190,6 @@ private:
     Circuit& circuit;
 };
 
-// Main function to handle parsing and execution
 int main() {
     Circuit myCircuit;
     CircuitBuilder builder(myCircuit);
@@ -174,9 +197,8 @@ int main() {
     // Build the circuit from a text file
     builder.BuildCircuitFromFile("circuit_tester.txt");
 
-    // Test all gates by driving inputs and printing outputs dynamically
-    std::cout << "Sum: " << static_cast<int>(myCircuit.GetGateOutput("Gate1")) << std::endl;
-    std::cout << "Carry: " << static_cast<int>(myCircuit.GetGateOutput("Gate2")) << std::endl;
+    // Print only the outputs for the gates marked with "output"
+    myCircuit.PrintOutputs();
 
-    return 0;
+    return 0;  // Terminate the main function
 }

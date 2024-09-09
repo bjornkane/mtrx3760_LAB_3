@@ -1,0 +1,32 @@
+# One Bit Comparator Circuit
+
+component 1BitComparator comp
+
+input comp 0 0				# Set A = 0 for one bit comparator
+input comp 1 0				# Set B = 0 for one bit comparator
+comparator_output comp greater		# Output a > b
+comparator_output comp equal		# Output a < b
+comparator_output comp less		# Output a == b
+
+input comp 0 0				# Set A = 0 for one bit comparator
+input comp 1 1				# Set B = 1 for one bit comparator
+comparator_output comp greater		# Output a > b
+comparator_output comp equal		# Output a < b
+comparator_output comp less		# Output a == b
+
+
+input comp 0 1				# Set A = 1 for one bit comparator
+input comp 1 0				# Set B = 0 for one bit comparator
+comparator_output comp greater		# Output a > b
+comparator_output comp equal		# Output a < b
+comparator_output comp less		# Output a == b
+
+
+input comp 0 1				# Set A = 1 for one bit comparator
+input comp 1 1				# Set B = 1 for one bit comparator
+comparator_output comp greater		# Output a > b
+comparator_output comp equal		# Output a < b
+comparator_output comp less		# Output a == b
+
+end 					# end of configuration
+

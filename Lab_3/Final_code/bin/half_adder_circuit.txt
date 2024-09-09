@@ -1,0 +1,35 @@
+# Half-Adder Circuit
+
+component XOR Sum    # XOR gate for sum
+component AND Carry    # AND gate for carry
+
+input Sum 0 0        # Set A = 0 for XOR
+input Sum 1 0        # Set B = 0 for XOR
+input Carry 0 0      # Set A = 0 for AND
+input Carry 1 0      # Set B = 0 for AND
+output Sum           # Output sum
+output Carry	     # Output carry
+
+input Sum 0 0        # Set A = 0 for XOR
+input Sum 1 1        # Set B = 1 for XOR
+input Carry 0 0      # Set A = 0 for AND
+input Carry 1 1      # Set B = 1 for AND
+output Sum           # Output sum
+output Carry	     # Output carry
+
+input Sum 0 1        # Set A = 1 for XOR
+input Sum 1 0        # Set B = 0 for XOR
+input Carry 0 1      # Set A = 1 for AND
+input Carry 1 0      # Set B = 0 for AND
+output Sum           # Output sum
+output Carry	     # Output carry
+
+input Sum 0 1        # Set A = 1 for XOR
+input Sum 1 1        # Set B = 1 for XOR
+input Carry 0 1      # Set A = 1 for AND
+input Carry 1 1      # Set B = 1 for AND
+output Sum           # Output sum
+output Carry	     # Output carry
+
+end	             # end of configuration
+
